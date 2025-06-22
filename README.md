@@ -16,15 +16,6 @@ A **high-performance Rust transport** for Python's `httpx` library. This provide
 - 🛡️ **Production-ready** with comprehensive error handling
 - 🎯 **Thread-safe** with GIL-free async operations
 
-## Performance
-
-| Transport | RPS | p99 Latency | CPU Usage |
-|-----------|-----|-------------|-----------|
-| httpx default | 7,200 | 11.3ms | 220% |
-| **rust-httpx** | **44,900** | **2.7ms** | **46%** |
-
-*Benchmarks: 8 vCPU, 1ms RTT, 40k requests*
-
 ## Installation
 
 ```bash
