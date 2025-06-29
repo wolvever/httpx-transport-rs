@@ -15,8 +15,9 @@ if TYPE_CHECKING:
 try:
     from ._rust_httpx import AsyncTransport as _AsyncTransport, SyncTransport as _SyncTransport
     from ._rust_httpx import __version__
-    
+
     _RUST_AVAILABLE = True
+    _IMPORT_ERROR: Optional[Exception] = None
 except ImportError as e:
     _RUST_AVAILABLE = False
     _IMPORT_ERROR = e
@@ -51,6 +52,20 @@ class AsyncTransport:
     
     async def handle_async_request(self, request: "httpcore.Request") -> "httpcore.Response":
         """Handle an async HTTP request."""
+        if not isinstance(request.url, (str, bytes)) or not isinstance(request.method, str):
+            import httpcore
+
+            method = (
+                request.method.decode() if isinstance(request.method, (bytes, bytearray)) else request.method
+            )
+
+            request = httpcore.Request(
+                method=method,
+                url=str(request.url),
+                headers=[],
+                content=request.stream,
+                extensions=request.extensions,
+            )
         return await self._transport.handle_async_request(request)
     
     async def aclose(self) -> None:
@@ -59,6 +74,12 @@ class AsyncTransport:
     
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
+
+    async def __aenter__(self) -> "AsyncTransport":
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        await self.aclose()
 
 
 class SyncTransport:
@@ -87,6 +108,20 @@ class SyncTransport:
     
     def handle_request(self, request: "httpcore.Request") -> "httpcore.Response":
         """Handle a sync HTTP request."""
+        if not isinstance(request.url, (str, bytes)) or not isinstance(request.method, str):
+            import httpcore
+
+            method = (
+                request.method.decode() if isinstance(request.method, (bytes, bytearray)) else request.method
+            )
+
+            request = httpcore.Request(
+                method=method,
+                url=str(request.url),
+                headers=[],
+                content=request.stream,
+                extensions=request.extensions,
+            )
         return self._transport.handle_request(request)
     
     def close(self) -> None:
@@ -95,6 +130,12 @@ class SyncTransport:
     
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
+
+    def __enter__(self) -> "SyncTransport":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.close()
 
 
 def is_available() -> bool:

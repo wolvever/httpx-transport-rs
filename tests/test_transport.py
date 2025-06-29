@@ -3,6 +3,17 @@
 import pytest
 import asyncio
 from unittest.mock import Mock, patch
+import socket
+
+
+def _can_connect_httpbin() -> bool:
+    try:
+        with socket.create_connection(("httpbin.org", 443), timeout=1):
+            return True
+    except OSError:
+        return False
+
+HTTPBIN_AVAILABLE = _can_connect_httpbin()
 
 try:
     import httpx
@@ -20,6 +31,7 @@ except ImportError:
 
 @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust transport not available")
 @pytest.mark.skipif(not HTTPX_AVAILABLE, reason="httpx not available")
+@pytest.mark.skipif(not HTTPBIN_AVAILABLE, reason="httpbin.org not reachable")
 class TestAsyncTransport:
     """Test the async Rust transport."""
     
@@ -94,6 +106,7 @@ class TestAsyncTransport:
 
 @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust transport not available")
 @pytest.mark.skipif(not HTTPX_AVAILABLE, reason="httpx not available")
+@pytest.mark.skipif(not HTTPBIN_AVAILABLE, reason="httpbin.org not reachable")
 class TestSyncTransport:
     """Test the sync Rust transport."""
     
